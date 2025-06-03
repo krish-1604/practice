@@ -41,7 +41,7 @@ export default function Card({ id, name, email }: User) {
     if (!validateForm()) return;
 
     try {
-      const response = await fetch(`http://localhost:8000/users/${id}`, {
+      const response = await fetch(`http://3.110.49.16:8000/users/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -71,7 +71,7 @@ export default function Card({ id, name, email }: User) {
 
     setIsDeleting(true);
     try {
-      const response = await fetch(`http://localhost:8000/users/${id}`, {
+      const response = await fetch(`http://3.110.49.16:8000/users/${id}`, {
         method: 'DELETE',
       });
 

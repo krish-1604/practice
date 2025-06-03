@@ -4,7 +4,7 @@ import Card from "../components/usercard";
 import { useUserContext } from "../context/userContext";
 
 export default function Dashboard() {
-  const { users, loading, error } = useUserContext();
+  const { users, error } = useUserContext();
 
   if (error) {
     return (
