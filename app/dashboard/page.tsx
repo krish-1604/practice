@@ -16,7 +16,6 @@ export default function Dashboard() {
   } = useUserContext();
   
   const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadingRef = useRef<HTMLDivElement | null>(null);
 
   // Intersection Observer callback
   const lastUserElementRef = useCallback((node: HTMLTableRowElement | null) => {
@@ -24,7 +23,7 @@ export default function Dashboard() {
     if (observerRef.current) observerRef.current.disconnect();
     
     observerRef.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
+      if (entries[0].isIntersecting && hasMore && !loadingMore) {
         loadMoreUsers();
       }
     }, {
@@ -67,6 +66,12 @@ export default function Dashboard() {
           <h1 className="text-4xl font-bold">Dashboard</h1>
           <div className="mt-20 py-10 bg-[#1B1B1B] text-red-500 rounded-[20px]">
             <p className="text-center">{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-4 mx-auto block px-4 py-2 bg-[#39ff14] hover:bg-[#2dd10f] text-black rounded transition-colors"
+            >
+              Retry
+            </button>
           </div>
         </div>
       </div>
@@ -83,24 +88,27 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {users.length !== 0 ? (
+        {users.length > 0 ? (
           <div className="bg-[#1B1B1B] rounded-lg overflow-hidden shadow-lg">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="bg-[#2A2A2A] border-b border-[#3A3A3A]">
+                    <th className="text-left py-4 px-6 text-[#39ff14] font-semibold">ID</th>
                     <th className="text-left py-4 px-6 text-[#39ff14] font-semibold">Name</th>
                     <th className="text-left py-4 px-6 text-[#39ff14] font-semibold">Email</th>
                     <th className="text-left py-4 px-6 text-[#39ff14] font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((user, index) => {
+                  {users.reverse().map((user, index) => {
                     const isLast = index === users.length - 1;
+                    const displayNumber = index + 1;
                     return (
                       <UserRow 
-                        key={user.id} 
+                        key={`user-${user.id}-${index}`}
                         id={user.id}
+                        displayNumber={displayNumber}
                         name={user.name} 
                         email={user.email}
                         isLast={isLast}
@@ -134,6 +142,14 @@ export default function Dashboard() {
         ) : (
           <div className="mt-20 py-10 bg-[#1B1B1B] text-[#39ff14] rounded-[20px]">
             <p className="text-center text-[#9D9D9D]">No users found.</p>
+            {!loading && (
+              <button 
+                onClick={() => window.location.reload()}
+                className="mt-4 mx-auto block px-4 py-2 bg-[#39ff14] hover:bg-[#2dd10f] text-black rounded transition-colors"
+              >
+                Refresh
+              </button>
+            )}
           </div>
         )}
         
@@ -143,9 +159,10 @@ export default function Dashboard() {
             <p className="text-red-400 text-center">{error}</p>
             <button 
               onClick={loadMoreUsers}
-              className="mt-2 mx-auto block px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+              disabled={loadingMore}
+              className="mt-2 mx-auto block px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
             >
-              Try Again
+              {loadingMore ? 'Loading...' : 'Try Again'}
             </button>
           </div>
         )}

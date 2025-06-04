@@ -40,6 +40,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [hasMore, setHasMore] = useState(true);
   const [nextStart, setNextStart] = useState(0);
   const [totalUsers, setTotalUsers] = useState(0);
+  const mergeUsers = (existingUsers: User[], newUsers: User[]): User[] => {
+  const userMap = new Map<number, User>();
+  
+    existingUsers.forEach(user => {
+      userMap.set(user.id, user);
+    });
+    
+    newUsers.forEach(user => {
+      userMap.set(user.id, user);
+    });
+    
+    return Array.from(userMap.values());
+  };
 
   // Fetch initial users on mount
   useEffect(() => {
@@ -47,14 +60,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(`/api/proxy/users?start=0&limit=10`);
-        if (!response.ok) throw new Error("Failed to fetch users");
+        const response = await fetch(`http://3.110.49.16:8000/users?start=0&limit=10`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data: ApiResponse = await response.json();
         
-        setUsers(data.users);
-        setHasMore(data.hasMore);
-        setNextStart(data.nextStart);
-        setTotalUsers(data.totalUsers);
+        setUsers(data.users || []);
+        setHasMore(data.hasMore || false);
+        setNextStart(data.nextStart || 10);
+        setTotalUsers(data.totalUsers || 0);
       } catch (error) {
         console.error("Error fetching users:", error);
         setError("Failed to load users");
@@ -71,14 +84,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
     try {
       setLoadingMore(true);
       setError(null);
-      const response = await fetch(`/api/proxy/users?start=${nextStart}&limit=10`);
-      if (!response.ok) throw new Error("Failed to fetch more users");
+      const response = await fetch(`http://3.110.49.16:8000/users?start=${nextStart}&limit=10`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data: ApiResponse = await response.json();
       
-      setUsers(prev => [...prev, ...data.users]);
-      setHasMore(data.hasMore);
-      setNextStart(data.nextStart);
-      setTotalUsers(data.totalUsers);
+      // Merge users to avoid duplicates
+      setUsers(prev => mergeUsers(prev, data.users || []));
+      setHasMore(data.hasMore || false);
+      setNextStart(data.nextStart || nextStart + 10);
+      setTotalUsers(data.totalUsers || 0);
     } catch (error) {
       console.error("Error fetching more users:", error);
       setError("Failed to load more users");
@@ -88,7 +102,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [hasMore, loadingMore, nextStart]);
 
   const addUser = (user: User) => {
-    setUsers((prev) => [...prev, user]);
+    setUsers((prev) => {
+      if (prev.some(existingUser => existingUser.id === user.id)) {
+        return prev; // Don't add duplicate
+      }
+      return [...prev, user].sort((a, b) => a.id - b.id);
+    });
     setTotalUsers(prev => prev + 1);
   };
 
@@ -102,7 +121,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const removeUser = (id: number) => {
     setUsers((prev) => prev.filter((user) => user.id !== id));
-    setTotalUsers(prev => prev - 1);
+    setTotalUsers(prev => Math.max(0, prev - 1));
   };
 
   return (
