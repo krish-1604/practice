@@ -40,18 +40,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [hasMore, setHasMore] = useState(true);
   const [nextStart, setNextStart] = useState(0);
   const [totalUsers, setTotalUsers] = useState(0);
+  
   const mergeUsers = (existingUsers: User[], newUsers: User[]): User[] => {
     return [...existingUsers, ...newUsers];
   };
 
-
-  // Fetch initial users on mount
   useEffect(() => {
     async function fetchInitialUsers() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(`http://3.110.49.16:8000/users?start=0&limit=10`);
+        const response = await fetch(`/api/proxy/users?start=0&limit=10`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data: ApiResponse = await response.json();
         
@@ -75,11 +74,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
     try {
       setLoadingMore(true);
       setError(null);
-      const response = await fetch(`http://3.110.49.16:8000/users?start=${nextStart}&limit=10`);
+      const response = await fetch(`/api/proxy/users?start=${nextStart}&limit=10`);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data: ApiResponse = await response.json();
       
-      // Merge users to avoid duplicates
       setUsers(prev => mergeUsers(prev, data.users || []));
       setHasMore(data.hasMore || false);
       setNextStart(data.nextStart || nextStart + 10);
@@ -92,27 +90,70 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [hasMore, loadingMore, nextStart]);
 
-  const addUser = (user: User) => {
-    setUsers((prev) => {
-      if (prev.some(existingUser => existingUser.id === user.id)) {
-        return prev; // Don't add duplicate
-      }
-      return [...prev, user].sort((a, b) => a.id - b.id);
-    });
-    setTotalUsers(prev => prev + 1);
+  const addUser = async (user: Omit<User, 'id'>) => {
+    try {
+      const response = await fetch('/api/proxy/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(user),
+      });
+
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const newUser: User = await response.json();
+      
+      setUsers((prev) => {
+        if (prev.some(existingUser => existingUser.id === newUser.id)) {
+          return prev;
+        }
+        return [...prev, newUser].sort((a, b) => a.id - b.id);
+      });
+      setTotalUsers(prev => prev + 1);
+    } catch (error) {
+      console.error("Error adding user:", error);
+      setError("Failed to add user");
+    }
   };
 
-  const updateUser = (id: number, updatedUser: Omit<User, 'id'>) => {
-    setUsers((prev) => 
-      prev.map((user) => 
-        user.id === id ? { ...user, ...updatedUser } : user
-      )
-    );
+  const updateUser = async (id: number, updatedUser: Omit<User, 'id'>) => {
+    try {
+      const response = await fetch(`/api/proxy/users/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedUser),
+      });
+
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const updated: User = await response.json();
+      
+      setUsers((prev) => 
+        prev.map((user) => 
+          user.id === id ? updated : user
+        )
+      );
+    } catch (error) {
+      console.error("Error updating user:", error);
+      setError("Failed to update user");
+    }
   };
 
-  const removeUser = (id: number) => {
-    setUsers((prev) => prev.filter((user) => user.id !== id));
-    setTotalUsers(prev => Math.max(0, prev - 1));
+  const removeUser = async (id: number) => {
+    try {
+      const response = await fetch(`/api/proxy/users/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      
+      setUsers((prev) => prev.filter((user) => user.id !== id));
+      setTotalUsers(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error("Error removing user:", error);
+      setError("Failed to remove user");
+    }
   };
 
   return (

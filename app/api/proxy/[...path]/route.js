@@ -24,15 +24,11 @@ async function proxy(request, routeParams = {}) {
   const BACKEND_URL = 'http://3.110.49.16:8000';
 
   try {
-    // Ensure path is always an array to avoid undefined errors
-    
     const pathArray = Array.isArray(routeParams.path) ? routeParams.path : [];
     const backendPath = '/' + pathArray.join('/');
 
     console.log('Captured path segments:', pathArray);
     console.log(`Proxying ${request.method} request to: ${BACKEND_URL}${backendPath}`);
-
-    // Parse body for methods other than GET and HEAD
     const body = ['GET', 'HEAD'].includes(request.method)
       ? undefined
       : await request.json().catch(() => undefined);
