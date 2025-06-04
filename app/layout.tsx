@@ -32,8 +32,8 @@ export default function RootLayout({
       <body className="bg-black">
         <UserProvider>
           <div className="flex min-h-screen">
-            <Sidebar />
-            <main className="flex-1 relative">
+            <Sidebar/>
+            <main className="ml-64 flex-1 h-screen overflow-y-auto relative">
               {children}
               {mounted && isModalOpen && (
                 <div
