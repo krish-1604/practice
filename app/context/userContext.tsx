@@ -41,18 +41,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [nextStart, setNextStart] = useState(0);
   const [totalUsers, setTotalUsers] = useState(0);
   const mergeUsers = (existingUsers: User[], newUsers: User[]): User[] => {
-  const userMap = new Map<number, User>();
-  
-    existingUsers.forEach(user => {
-      userMap.set(user.id, user);
-    });
-    
-    newUsers.forEach(user => {
-      userMap.set(user.id, user);
-    });
-    
-    return Array.from(userMap.values());
+    return [...existingUsers, ...newUsers];
   };
+
 
   // Fetch initial users on mount
   useEffect(() => {
