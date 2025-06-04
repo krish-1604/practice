@@ -43,7 +43,7 @@ export default function Form({ onClose }: FormProps) {
   e.preventDefault();
   if (validateForm()) {
     try {
-      const response = await fetch('http://3.110.49.16:8000/users', {
+      const response = await fetch('/api/proxy/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

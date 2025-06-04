@@ -30,7 +30,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch("http://3.110.49.16:8000/users");
+        const response = await fetch("/api/proxy/users");
         if (!response.ok) throw new Error("Failed to fetch users");
         const data: User[] = await response.json();
         setUsers(data);
