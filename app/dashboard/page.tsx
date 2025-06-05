@@ -3,7 +3,13 @@
 import SearchBar from "../components/searchbar";
 import UserRow from "../components/usercard";
 import { useUserContext } from "../context/userContext";
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
 
 export default function Dashboard() {
   const { 
@@ -16,11 +22,48 @@ export default function Dashboard() {
     totalUsers 
   } = useUserContext();
   
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<User[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // Intersection Observer callback
+  // Handle search query changes with API call
+  const handleSearch = useCallback(async (query: string) => {
+    setSearchQuery(query);
+    
+    if (!query.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      setSearchError(null);
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      setSearchError(null);
+      
+      // Make API call to search all users
+      const response = await fetch(`/api/proxy/users/search?q=${encodeURIComponent(query)}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setSearchResults(data.users || data || []);
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchError('Failed to search users');
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  // Intersection Observer callback - only for non-search mode
   const lastUserElementRef = useCallback((node: HTMLTableRowElement | null) => {
-    if (loading || loadingMore) return;
+    if (loading || loadingMore || searchQuery.trim()) return;
     if (observerRef.current) observerRef.current.disconnect();
     
     observerRef.current = new IntersectionObserver(entries => {
@@ -33,7 +76,7 @@ export default function Dashboard() {
     });
     
     if (node) observerRef.current.observe(node);
-  }, [loading, loadingMore, hasMore, loadMoreUsers]);
+  }, [loading, loadingMore, hasMore, loadMoreUsers, searchQuery]);
 
   // Cleanup observer on unmount
   useEffect(() => {
@@ -44,7 +87,11 @@ export default function Dashboard() {
     };
   }, []);
 
-  if (loading) {
+  // Determine which users to display
+  const displayUsers = searchQuery.trim() ? searchResults : users;
+  const isInSearchMode = searchQuery.trim() !== "";
+
+  if (loading && !isInSearchMode) {
     return (
       <div className="bg-black text-[#39ff14] flex h-screen">
         <div className="flex-1 p-6">
@@ -60,7 +107,7 @@ export default function Dashboard() {
     );
   }
 
-  if (error && users.length === 0) {
+  if (error && users.length === 0 && !isInSearchMode) {
     return (
       <div className="bg-black text-[#39ff14] flex h-screen">
         <div className="flex-1 p-6">
@@ -85,14 +132,58 @@ export default function Dashboard() {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold">Dashboard</h1>
           <div className="text-[#9D9D9D]">
-            Showing {users.length} of {totalUsers} users
+            {isInSearchMode ? (
+              <>
+                Found {displayUsers.length} user{displayUsers.length !== 1 ? 's' : ''}
+                {isSearching && (
+                  <span className="ml-2">
+                    <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-[#39ff14]"></div>
+                  </span>
+                )}
+              </>
+            ) : (
+              `Showing ${users.length} of ${totalUsers} users`
+            )}
           </div>
         </div>
         
         <div className="py-10 px-20">
-          <SearchBar />     
+          <SearchBar onSearch={handleSearch} />     
         </div>
-        {users.length > 0 ? (
+
+        {/* Search status indicator */}
+        {isInSearchMode && (
+          <div className="mb-4 px-4">
+            <p className="text-[#9D9D9D] text-sm">
+              {isSearching ? (
+                <>
+                  <span className="inline-block animate-spin rounded-full h-3 w-3 border-b border-[#39ff14] mr-2"></span>
+                  Searching for: "<span className="text-[#39ff14]">{searchQuery}</span>"
+                </>
+              ) : (
+                <>
+                  Search results for: "<span className="text-[#39ff14]">{searchQuery}</span>"
+                  {displayUsers.length === 0 && " - No matches found"}
+                </>
+              )}
+            </p>
+          </div>
+        )}
+
+        {/* Search error */}
+        {searchError && (
+          <div className="mb-4 py-3 px-4 bg-red-900/20 border border-red-500 rounded-lg">
+            <p className="text-red-400 text-center">{searchError}</p>
+            <button 
+              onClick={() => handleSearch(searchQuery)}
+              className="mt-2 mx-auto block px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {displayUsers.length > 0 ? (
           <div className="bg-[#1B1B1B] rounded-lg overflow-hidden shadow-lg">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -105,18 +196,18 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.reverse().map((user, index) => {
-                    const isLast = index === users.length - 1;
+                  {displayUsers.map((user, index) => {
+                    const isLast = index === displayUsers.length - 1;
                     const displayNumber = index + 1;
                     return (
                       <UserRow 
-                        key={`user-${user.id}-${index}`}
+                        key={`user-${user.id}-${index}-${isInSearchMode ? 'search' : 'normal'}`}
                         id={user.id}
                         displayNumber={displayNumber}
                         name={user.name} 
                         email={user.email}
                         isLast={isLast}
-                        ref={isLast ? lastUserElementRef : null}
+                        ref={isLast && !isInSearchMode ? lastUserElementRef : null}
                       />
                     );
                   })}
@@ -124,8 +215,8 @@ export default function Dashboard() {
               </table>
             </div>
             
-            {/* Loading indicator for infinite scroll */}
-            {loadingMore && (
+            {/* Loading indicator for infinite scroll - only show when not searching */}
+            {loadingMore && !isInSearchMode && (
               <div className="py-4 bg-[#1B1B1B] border-t border-[#3A3A3A]">
                 <div className="flex items-center justify-center">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#39ff14]"></div>
@@ -134,8 +225,8 @@ export default function Dashboard() {
               </div>
             )}
             
-            {/* End of list indicator */}
-            {!hasMore && users.length > 0 && (
+            {/* End of list indicator - only show when not searching */}
+            {!hasMore && displayUsers.length > 0 && !isInSearchMode && (
               <div className="py-4 bg-[#1B1B1B] border-t border-[#3A3A3A]">
                 <p className="text-center text-[#9D9D9D]">
                   All {totalUsers} users loaded
@@ -145,8 +236,14 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="mt-20 py-10 bg-[#1B1B1B] text-[#39ff14] rounded-[20px]">
-            <p className="text-center text-[#9D9D9D]">No users found.</p>
-            {!loading && (
+            <p className="text-center text-[#9D9D9D]">
+              {isInSearchMode ? (
+                isSearching ? "Searching..." : "No users match your search."
+              ) : (
+                "No users found."
+              )}
+            </p>
+            {!loading && !isInSearchMode && (
               <button 
                 onClick={() => window.location.reload()}
                 className="mt-4 mx-auto block px-4 py-2 bg-[#39ff14] hover:bg-[#2dd10f] text-black rounded transition-colors"
@@ -157,8 +254,8 @@ export default function Dashboard() {
           </div>
         )}
         
-        {/* Error indicator for load more */}
-        {error && users.length > 0 && (
+        {/* Error indicator for load more - only show when not searching */}
+        {error && users.length > 0 && !isInSearchMode && (
           <div className="mt-4 py-3 px-4 bg-red-900/20 border border-red-500 rounded-lg">
             <p className="text-red-400 text-center">{error}</p>
             <button 
