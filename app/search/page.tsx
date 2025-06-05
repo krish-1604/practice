@@ -8,7 +8,7 @@ export default function Search() {
   return (
     <div>
       <div className="py-10 px-20">
-        <SearchBar />
+        {/* <SearchBar /> */}
         <div className="mt-20 py-10 bg-[#1B1B1B] text-[#39ff14] rounded-[20px]">
           {users.length !== 0 ? (
             users.map((user, index) => (
