@@ -158,11 +158,11 @@ export default function Dashboard() {
               {isSearching ? (
                 <>
                   <span className="inline-block animate-spin rounded-full h-3 w-3 border-b border-[#39ff14] mr-2"></span>
-                  Searching for: "<span className="text-[#39ff14]">{searchQuery}</span>"
+                  Searching for: &quot;<span className="text-[#39ff14]">{searchQuery}</span>&quot;
                 </>
               ) : (
                 <>
-                  Search results for: "<span className="text-[#39ff14]">{searchQuery}</span>"
+                  Search results for: &quot;<span className="text-[#39ff14]">{searchQuery}</span>&quot;
                   {displayUsers.length === 0 && " - No matches found"}
                 </>
               )}

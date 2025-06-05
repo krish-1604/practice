@@ -1,5 +1,4 @@
 "use client";
-import SearchBar from "../components/searchbar";
 import { useUserContext } from "../context/userContext";
 
 export default function Search() {
