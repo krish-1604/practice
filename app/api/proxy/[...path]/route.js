@@ -1,7 +1,4 @@
 import { NextResponse } from 'next/server';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 export async function GET(request, { params }) {
   const routeParams = await params;
@@ -24,7 +21,7 @@ export async function DELETE(request, { params }) {
 }
 
 async function proxy(request, routeParams = {}) {
-  const BACKEND_URL = process.env.BACKEND_URL;
+  const BACKEND_URL = 'http://3.110.49.16:8000';
 
   try {
     const url = new URL(request.url);
@@ -34,6 +31,7 @@ async function proxy(request, routeParams = {}) {
       if (!searchQuery) {
         return NextResponse.json({ users: [] }, { status: 200 });
       }
+      
       const searchEndpoints = [
         `/users/search?q=${encodeURIComponent(searchQuery)}`,
         `/users?search=${encodeURIComponent(searchQuery)}`,
