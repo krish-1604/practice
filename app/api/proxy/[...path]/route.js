@@ -26,15 +26,11 @@ async function proxy(request, routeParams = {}) {
   try {
     const url = new URL(request.url);
     const pathArray = Array.isArray(routeParams.path) ? routeParams.path : [];
-    
-    // Handle search endpoint specifically
     if (pathArray.length >= 2 && pathArray[0] === 'users' && pathArray[1] === 'search') {
       const searchQuery = url.searchParams.get('q');
       if (!searchQuery) {
         return NextResponse.json({ users: [] }, { status: 200 });
       }
-      
-      // Try different search endpoints your backend might support
       const searchEndpoints = [
         `/users/search?q=${encodeURIComponent(searchQuery)}`,
         `/users?search=${encodeURIComponent(searchQuery)}`,
@@ -42,7 +38,6 @@ async function proxy(request, routeParams = {}) {
         `/search/users?q=${encodeURIComponent(searchQuery)}`
       ];
       
-      // Try each endpoint until one works
       for (const endpoint of searchEndpoints) {
         try {
           console.log(`Trying search endpoint: ${BACKEND_URL}${endpoint}`);
@@ -68,7 +63,6 @@ async function proxy(request, routeParams = {}) {
         }
       }
       
-      // If no search endpoint works, fall back to getting all users and filtering
       console.log('All search endpoints failed, falling back to client-side filtering');
       try {
         const res = await fetch(`${BACKEND_URL}/users?limit=1000`, {
@@ -82,7 +76,6 @@ async function proxy(request, routeParams = {}) {
           const data = await res.json();
           const allUsers = data.users || data || [];
           
-          // Filter users on the server side
           const filteredUsers = allUsers.filter(user => 
             user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             user.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -103,7 +96,6 @@ async function proxy(request, routeParams = {}) {
       }, { status: 200 });
     }
     
-    // Original proxy logic for non-search requests
     const backendPath = '/' + pathArray.join('/');
     const query = url.search;
 

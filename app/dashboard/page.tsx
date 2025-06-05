@@ -28,7 +28,6 @@ export default function Dashboard() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // Handle search query changes with API call
   const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query);
     
@@ -43,7 +42,6 @@ export default function Dashboard() {
       setIsSearching(true);
       setSearchError(null);
       
-      // Make API call to search all users
       const response = await fetch(`/api/proxy/users/search?q=${encodeURIComponent(query)}`);
       
       if (!response.ok) {
@@ -61,7 +59,6 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Intersection Observer callback - only for non-search mode
   const lastUserElementRef = useCallback((node: HTMLTableRowElement | null) => {
     if (loading || loadingMore || searchQuery.trim()) return;
     if (observerRef.current) observerRef.current.disconnect();
@@ -78,7 +75,6 @@ export default function Dashboard() {
     if (node) observerRef.current.observe(node);
   }, [loading, loadingMore, hasMore, loadMoreUsers, searchQuery]);
 
-  // Cleanup observer on unmount
   useEffect(() => {
     return () => {
       if (observerRef.current) {
@@ -87,7 +83,6 @@ export default function Dashboard() {
     };
   }, []);
 
-  // Determine which users to display
   const displayUsers = searchQuery.trim() ? searchResults : users;
   const isInSearchMode = searchQuery.trim() !== "";
 
@@ -215,7 +210,6 @@ export default function Dashboard() {
               </table>
             </div>
             
-            {/* Loading indicator for infinite scroll - only show when not searching */}
             {loadingMore && !isInSearchMode && (
               <div className="py-4 bg-[#1B1B1B] border-t border-[#3A3A3A]">
                 <div className="flex items-center justify-center">
@@ -225,7 +219,6 @@ export default function Dashboard() {
               </div>
             )}
             
-            {/* End of list indicator - only show when not searching */}
             {!hasMore && displayUsers.length > 0 && !isInSearchMode && (
               <div className="py-4 bg-[#1B1B1B] border-t border-[#3A3A3A]">
                 <p className="text-center text-[#9D9D9D]">
@@ -254,7 +247,6 @@ export default function Dashboard() {
           </div>
         )}
         
-        {/* Error indicator for load more - only show when not searching */}
         {error && users.length > 0 && !isInSearchMode && (
           <div className="mt-4 py-3 px-4 bg-red-900/20 border border-red-500 rounded-lg">
             <p className="text-red-400 text-center">{error}</p>
