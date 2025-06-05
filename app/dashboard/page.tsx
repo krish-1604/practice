@@ -1,5 +1,6 @@
 "use client";
 
+import SearchBar from "../components/searchbar";
 import UserRow from "../components/usercard";
 import { useUserContext } from "../context/userContext";
 import { useEffect, useRef, useCallback } from "react";
@@ -87,7 +88,10 @@ export default function Dashboard() {
             Showing {users.length} of {totalUsers} users
           </div>
         </div>
-
+        
+        <div className="py-10 px-20">
+          <SearchBar />     
+        </div>
         {users.length > 0 ? (
           <div className="bg-[#1B1B1B] rounded-lg overflow-hidden shadow-lg">
             <div className="overflow-x-auto">
