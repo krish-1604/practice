@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export async function GET(request, { params }) {
   const routeParams = await params;
@@ -21,7 +24,7 @@ export async function DELETE(request, { params }) {
 }
 
 async function proxy(request, routeParams = {}) {
-  const BACKEND_URL = 'http://3.110.49.16:8000';
+  const BACKEND_URL = process.env.BACKEND_URL;
 
   try {
     const url = new URL(request.url);
