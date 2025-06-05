@@ -24,16 +24,20 @@ async function proxy(request, routeParams = {}) {
   const BACKEND_URL = 'http://3.110.49.16:8000';
 
   try {
+    const url = new URL(request.url);
     const pathArray = Array.isArray(routeParams.path) ? routeParams.path : [];
     const backendPath = '/' + pathArray.join('/');
 
+    const query = url.search; // Includes ?start=0&limit=10 if present
+
     console.log('Captured path segments:', pathArray);
-    console.log(`Proxying ${request.method} request to: ${BACKEND_URL}${backendPath}`);
+    console.log(`Proxying ${request.method} request to: ${BACKEND_URL}${backendPath}${query}`);
+
     const body = ['GET', 'HEAD'].includes(request.method)
       ? undefined
       : await request.json().catch(() => undefined);
 
-    const res = await fetch(`${BACKEND_URL}${backendPath}`, {
+    const res = await fetch(`${BACKEND_URL}${backendPath}${query}`, {
       method: request.method,
       headers: {
         'Content-Type': 'application/json',
@@ -41,10 +45,7 @@ async function proxy(request, routeParams = {}) {
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    console.log(`Backend responded with status: ${res.status}`);
-
     const contentType = res.headers.get('content-type') || '';
-
     if (contentType.includes('application/json')) {
       const data = await res.json();
       return NextResponse.json(data, { status: res.status });
@@ -63,3 +64,4 @@ async function proxy(request, routeParams = {}) {
     return NextResponse.json({ error: 'Failed to connect to backend: ' + err.message }, { status: 500 });
   }
 }
+
