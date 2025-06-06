@@ -6,6 +6,13 @@ import ClientLayout from "./ClientLayout";
 export const metadata = {
   title: "User Dashboard",
   description: "Manage your users efficiently",
+  robots: {
+      index: true,
+      follow: true,
+      nocache: false,
+    },
+  siteName: "Dashboard",
+  type: "website",
 };
 
 export default function RootLayout({
