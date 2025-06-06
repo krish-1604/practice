@@ -1,6 +1,8 @@
+
 "use client";
 import { Search } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useDebounce } from "../hooks/useDebounce";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -8,15 +10,7 @@ interface SearchBarProps {
 
 export default function SearchBar({ onSearch }: SearchBarProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 500); 
-
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+  const { debouncedValue: debouncedSearchTerm, triggerImmediately } = useDebounce(searchTerm, 1000);
 
   useEffect(() => {
     onSearch(debouncedSearchTerm);
@@ -27,7 +21,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
   };
 
   const handleSearchClick = () => {
-    setDebouncedSearchTerm(searchTerm);
+    triggerImmediately();
   };
 
   return (
@@ -37,6 +31,11 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         placeholder="Search user"
         value={searchTerm}
         onChange={handleInputChange}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            triggerImmediately();
+          }
+        }}
         className="bg-transparent outline-none text-[#39ff14] placeholder-[#9D9D9D] w-full pr-2"
       />
       <div className="w-[1px] h-5 bg-[#7D7D7D] mr-3" />
