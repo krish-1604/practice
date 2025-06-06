@@ -3,7 +3,8 @@
 import SearchBar from "../components/searchbar";
 import UserRow from "../components/usercard";
 import { useUserContext } from "../context/userContext";
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useState, useCallback } from "react";
+import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 
 interface User {
   id: number;
@@ -26,7 +27,6 @@ export default function Dashboard() {
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
 
   const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query);
@@ -59,29 +59,14 @@ export default function Dashboard() {
     }
   }, []);
 
-  const lastUserElementRef = useCallback((node: HTMLTableRowElement | null) => {
-    if (loading || loadingMore || searchQuery.trim()) return;
-    if (observerRef.current) observerRef.current.disconnect();
-    
-    observerRef.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore && !loadingMore) {
-        loadMoreUsers();
-      }
-    }, {
-      threshold: 0.1,
-      rootMargin: '100px'
-    });
-    
-    if (node) observerRef.current.observe(node);
-  }, [loading, loadingMore, hasMore, loadMoreUsers, searchQuery]);
-
-  useEffect(() => {
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, []);
+  const lastUserElementRef = useInfiniteScroll({
+    hasMore,
+    isLoading: loading || loadingMore,
+    onLoadMore: loadMoreUsers,
+    threshold: 0.1,
+    rootMargin: '100px',
+    enabled: !searchQuery.trim()
+  });
 
   const displayUsers = searchQuery.trim() ? searchResults : users;
   const isInSearchMode = searchQuery.trim() !== "";
