@@ -19,7 +19,7 @@ export default function Form({ onClose }: FormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (isSubmitting) return; // Prevent double submission
+    if (isSubmitting) return;
       if (validateForm()) {
         setIsSubmitting(true);
         try {

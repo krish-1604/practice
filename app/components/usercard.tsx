@@ -15,13 +15,7 @@ const UserRow = forwardRef<HTMLTableRowElement, UserRowProps>(
   ({ id, displayNumber, name, email, isLast }, ref) => {
     const [isEditing, setIsEditing] = useState(false);
     const { handleUpdateUser, handleDeleteUser, isUserDeleting } = useUserOperations();
-    const {
-      formData,
-      errors,
-      validateForm,
-      handleInputChange,
-      setInitialData
-    } = useFormValidation({ name, email });
+    const {formData,errors,validateForm,handleInputChange,setInitialData} = useFormValidation({ name, email });
 
     const handleEdit = async () => {
       if (!validateForm()) return;

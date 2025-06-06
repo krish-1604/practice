@@ -22,7 +22,6 @@ interface UserContextType {
   addUser: (user: User) => void;
   updateUser: (id: number, updatedUser: Omit<User, 'id'>) => void;
   removeUser: (id: number) => void;
-  // API methods that make actual API calls
   addUserAPI: (user: Omit<User, 'id'>) => Promise<void>;
   updateUserAPI: (id: number, updatedUser: Omit<User, 'id'>) => Promise<void>;
   removeUserAPI: (id: number) => Promise<void>;
