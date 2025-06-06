@@ -1,10 +1,9 @@
-import ClientLayout from "./ClientLayout";
 import Dashboard from "./dashboard/page";
 
 export default function Home() {
   return (
-    <ClientLayout>
+    <div>
       <Dashboard />
-    </ClientLayout>
+    </div>
   );
 }

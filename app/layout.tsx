@@ -1,6 +1,7 @@
 import "./globals.css";
 import { UserProvider } from "./context/userContext";
 import Sidebar from "./components/sidebar";
+import ClientLayout from "./ClientLayout";
 
 export const metadata = {
   title: "User Dashboard",
@@ -19,7 +20,9 @@ export default function RootLayout({
           <div className="flex min-h-screen">
             <Sidebar />
             <main className="ml-64 flex-1 h-screen overflow-y-auto relative">
-              {children}
+              <ClientLayout>
+                {children}
+              </ClientLayout>
             </main>
           </div>
         </UserProvider>
