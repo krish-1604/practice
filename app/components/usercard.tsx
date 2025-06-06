@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { useState } from "react";
-import { useUserContext } from "../context/userContext";
+import { useFormValidation } from "../hooks/useFormValidation";
+import { useUserOperations } from "../hooks/useUserOperations";
 
 interface UserRowProps {
   id: number;
@@ -12,99 +13,43 @@ interface UserRowProps {
 
 const UserRow = forwardRef<HTMLTableRowElement, UserRowProps>(
   ({ id, displayNumber, name, email, isLast }, ref) => {
-    const { updateUser, removeUser } = useUserContext();
     const [isEditing, setIsEditing] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
-    const [formData, setFormData] = useState({ name, email });
-    const [errors, setErrors] = useState({ name: "", email: "" });
-
-    const validateForm = () => {
-      const newErrors = { name: "", email: "" };
-      let isValid = true;
-
-      if (!formData.name.trim()) {
-        newErrors.name = "Name is required";
-        isValid = false;
-      }
-
-      if (!formData.email.trim()) {
-        newErrors.email = "Email is required";
-        isValid = false;
-      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-        newErrors.email = "Please enter a valid email";
-        isValid = false;
-      }
-
-      setErrors(newErrors);
-      return isValid;
-    };
+    const { handleUpdateUser, handleDeleteUser, isUserDeleting } = useUserOperations();
+    const {
+      formData,
+      errors,
+      validateForm,
+      handleInputChange,
+      setInitialData
+    } = useFormValidation({ name, email });
 
     const handleEdit = async () => {
       if (!validateForm()) return;
 
       try {
-        const response = await fetch(`/api/proxy/users/${id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          alert(`Error: ${errorData.error || 'Failed to update user'}`);
-          return;
-        }
-
-        updateUser(id, formData);
+        await handleUpdateUser(id, formData);
         setIsEditing(false);
-        setErrors({ name: "", email: "" });
       } catch (error) {
-        alert('Network error: Could not connect to the server');
-        console.error('Error updating user:', error);
+        alert(`Error: ${error instanceof Error ? error.message : 'Failed to update user'}`);
       }
     };
 
     const handleDelete = async () => {
-      if (!window.confirm('Are you sure you want to delete this user?')) {
-        return;
-      }
-
-      setIsDeleting(true);
       try {
-        const response = await fetch(`/api/proxy/users/${id}`, {
-          method: 'DELETE',
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          alert(`Error: ${errorData.error || 'Failed to delete user'}`);
-          return;
-        }
-
-        removeUser(id);
+        await handleDeleteUser(id);
       } catch (error) {
-        alert('Network error: Could not connect to the server');
-        console.error('Error deleting user:', error);
-      } finally {
-        setIsDeleting(false);
+        alert(`Error: ${error instanceof Error ? error.message : 'Failed to delete user'}`);
       }
     };
 
     const handleCancel = () => {
-      setFormData({ name, email });
-      setErrors({ name: "", email: "" });
+      setInitialData({ name, email });
       setIsEditing(false);
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { name, value } = e.target;
-      setFormData((prev) => ({ ...prev, [name]: value }));
-
-      if (errors[name as keyof typeof errors]) {
-        setErrors((prev) => ({ ...prev, [name]: "" }));
-      }
+    const handleEditClick = () => {
+      setInitialData({ name, email });
+      setIsEditing(true);
     };
 
     return (
@@ -180,17 +125,17 @@ const UserRow = forwardRef<HTMLTableRowElement, UserRowProps>(
             <td className="py-4 px-6">
               <div className="flex space-x-2">
                 <button 
-                  onClick={() => setIsEditing(true)}
+                  onClick={handleEditClick}
                   className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                 >
                   Edit
                 </button>
                 <button 
                   onClick={handleDelete}
-                  disabled={isDeleting}
+                  disabled={isUserDeleting(id)}
                   className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isDeleting ? 'Deleting...' : 'Delete'}
+                  {isUserDeleting(id) ? 'Deleting...' : 'Delete'}
                 </button>
               </div>
             </td>

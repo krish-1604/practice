@@ -10,9 +10,10 @@ interface User {
 export function useUserOperations() {
   const { addUser, updateUser, removeUser } = useUserContext();
   const [isDeleting, setIsDeleting] = useState<Record<number, boolean>>({});
-
   const handleAddUser = async (userData: Omit<User, 'id'>) => {
     try {
+      console.log('Sending user data:', userData);
+      
       const response = await fetch('/api/proxy/users', {
         method: 'POST',
         headers: {
@@ -21,13 +22,24 @@ export function useUserOperations() {
         body: JSON.stringify(userData),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to add user');
-      }
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
 
-      const newUser = await response.json();
-      addUser(newUser);
+      if (!response.ok) {
+        let errorMessage = 'Failed to add user';
+        try {
+          const errorData = await response.json();
+          console.log('Error response data:', errorData);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (parseError) {
+          console.log('Could not parse error response:', parseError);
+          const errorText = await response.text();
+          console.log('Error response text:', errorText);
+        }
+        throw new Error(errorMessage);
+      }      const newUser = await response.json();
+      console.log('Successfully created user:', newUser);
+      addUser(newUser); // This now only updates state, doesn't make API call
       return newUser;
     } catch (error) {
       console.error('Error adding user:', error);

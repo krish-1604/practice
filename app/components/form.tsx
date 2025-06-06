@@ -1,88 +1,41 @@
 "use client";
 import { useState } from "react";
-import { useUserContext } from "../context/userContext";
-
+import { useFormValidation } from "../hooks/useFormValidation";
+import { useUserOperations } from "../hooks/useUserOperations";
 interface FormProps {
   onClose: () => void;
 }
 
 export default function Form({ onClose }: FormProps) {
-  const { addUser } = useUserContext();
-
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-  });
-  const [errors, setErrors] = useState({
-    name: "",
-    email: "",
-  });
-
-  const validateForm = () => {
-    const newErrors = { name: "", email: "" };
-    let isValid = true;
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
-      isValid = false;
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-      isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email";
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
+  const { handleAddUser } = useUserOperations();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    formData,
+    errors,
+    validateForm,
+    handleInputChange,
+    resetForm
+  } = useFormValidation();
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (validateForm()) {
-    try {
-      const response = await fetch('/api/proxy/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        alert(`Error: ${errorData.error || 'Failed to add user'}`);
-        return;
-      }
-
-      const newUser = await response.json();
-      addUser(newUser);  // Add user to context state
-      
-      setFormData({ name: '', email: '' });
-      setErrors({ name: '', email: '' });
-      onClose();
-    } catch (error) {
-      alert('Network error: Could not connect to the server');
-      console.error('Error adding user:', error);
-    }
-  }
-};
-
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    if (errors[name as keyof typeof errors]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
+    e.preventDefault();
+    
+    if (isSubmitting) return; // Prevent double submission
+      if (validateForm()) {
+        setIsSubmitting(true);
+        try {
+            await handleAddUser(formData);
+            resetForm();
+            onClose();
+        } catch (error) {
+            console.error("Error adding user:", error);
+        } finally {
+            setIsSubmitting(false);
+        }
     }
   };
 
   const handleCancel = () => {
-    setFormData({ name: "", email: "" });
-    setErrors({ name: "", email: "" });
+    resetForm();
     onClose();
   };
 
@@ -144,12 +97,16 @@ export default function Form({ onClose }: FormProps) {
           className="flex-1 bg-transparent border border-[#7D7D7D] text-[#9D9D9D] py-2 rounded-lg font-semibold hover:bg-[#2A2A2A] transition-colors duration-200"
         >
           Cancel
-        </button>
-        <button
+        </button>        <button
           type="submit"
-          className="flex-1 bg-[#39ff14] text-black py-2 rounded-lg font-semibold hover:bg-[#32cc12] transition-colors duration-200"
+          disabled={isSubmitting}
+          className={`flex-1 py-2 rounded-lg font-semibold transition-colors duration-200 ${
+            isSubmitting 
+              ? 'bg-gray-500 text-gray-300 cursor-not-allowed' 
+              : 'bg-[#39ff14] text-black hover:bg-[#32cc12]'
+          }`}
         >
-          Submit
+          {isSubmitting ? 'Submitting...' : 'Submit'}
         </button>
       </div>
     </form>

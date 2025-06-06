@@ -3,14 +3,8 @@
 import SearchBar from "../components/searchbar";
 import UserRow from "../components/usercard";
 import { useUserContext } from "../context/userContext";
-import { useState, useCallback } from "react";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-}
+import { useSearch } from "../hooks/useSearch";
 
 export default function Dashboard() {
   const { 
@@ -23,41 +17,14 @@ export default function Dashboard() {
     totalUsers 
   } = useUserContext();
   
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<User[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
-
-  const handleSearch = useCallback(async (query: string) => {
-    setSearchQuery(query);
-    
-    if (!query.trim()) {
-      setSearchResults([]);
-      setIsSearching(false);
-      setSearchError(null);
-      return;
-    }
-
-    try {
-      setIsSearching(true);
-      setSearchError(null);
-      
-      const response = await fetch(`/api/proxy/users/search?q=${encodeURIComponent(query)}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setSearchResults(data.users || data || []);
-    } catch (error) {
-      console.error('Search error:', error);
-      setSearchError('Failed to search users');
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  }, []);
+  const {
+    searchQuery,
+    searchResults,
+    isSearching,
+    searchError,
+    handleSearch,
+    isInSearchMode
+  } = useSearch();
 
   const lastUserElementRef = useInfiniteScroll({
     hasMore,
@@ -65,11 +32,10 @@ export default function Dashboard() {
     onLoadMore: loadMoreUsers,
     threshold: 0.1,
     rootMargin: '100px',
-    enabled: !searchQuery.trim()
+    enabled: !isInSearchMode
   });
 
-  const displayUsers = searchQuery.trim() ? searchResults : users;
-  const isInSearchMode = searchQuery.trim() !== "";
+  const displayUsers = isInSearchMode ? searchResults : users;
 
   if (loading && !isInSearchMode) {
     return (

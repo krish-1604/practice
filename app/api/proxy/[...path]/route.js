@@ -101,11 +101,13 @@ async function proxy(request, routeParams = {}) {
     const query = url.search;
 
     console.log('Captured path segments:', pathArray);
-    console.log(`Proxying ${request.method} request to: ${BACKEND_URL}${backendPath}${query}`);
-
-    const body = ['GET', 'HEAD'].includes(request.method)
+    console.log(`Proxying ${request.method} request to: ${BACKEND_URL}${backendPath}${query}`);    const body = ['GET', 'HEAD'].includes(request.method)
       ? undefined
       : await request.json().catch(() => undefined);
+
+    console.log('Request body being sent to backend:', body);
+    console.log('Request method:', request.method);
+    console.log('Backend URL:', `${BACKEND_URL}${backendPath}${query}`);
 
     const res = await fetch(`${BACKEND_URL}${backendPath}${query}`, {
       method: request.method,
@@ -113,15 +115,17 @@ async function proxy(request, routeParams = {}) {
         'Content-Type': 'application/json',
       },
       body: body ? JSON.stringify(body) : undefined,
-    });
-
-    const contentType = res.headers.get('content-type') || '';
+    });    const contentType = res.headers.get('content-type') || '';
     if (contentType.includes('application/json')) {
       const data = await res.json();
+      if (!res.ok) {
+        console.log('Backend returned error:', res.status, data);
+      }
       return NextResponse.json(data, { status: res.status });
     } else {
       const text = await res.text();
       console.log('Non-JSON response from backend:', text);
+      console.log('Response status:', res.status);
 
       if (res.status === 404) {
         return NextResponse.json({ error: 'Resource not found' }, { status: 404 });

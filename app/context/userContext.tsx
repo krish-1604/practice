@@ -22,6 +22,10 @@ interface UserContextType {
   addUser: (user: User) => void;
   updateUser: (id: number, updatedUser: Omit<User, 'id'>) => void;
   removeUser: (id: number) => void;
+  // API methods that make actual API calls
+  addUserAPI: (user: Omit<User, 'id'>) => Promise<void>;
+  updateUserAPI: (id: number, updatedUser: Omit<User, 'id'>) => Promise<void>;
+  removeUserAPI: (id: number) => Promise<void>;
   loading: boolean;
   loadingMore: boolean;
   error: string | null;
@@ -89,8 +93,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setLoadingMore(false);
     }
   }, [hasMore, loadingMore, nextStart]);
+  const addUser = (user: User) => {
+    setUsers((prev) => {
+      if (prev.some(existingUser => existingUser.id === user.id)) {
+        return prev;
+      }
+      return [...prev, user].sort((a, b) => a.id - b.id);
+    });
+    setTotalUsers(prev => prev + 1);
+  };
 
-  const addUser = async (user: Omit<User, 'id'>) => {
+  const addUserAPI = async (user: Omit<User, 'id'>) => {
     try {
       const response = await fetch('/api/proxy/users', {
         method: 'POST',
@@ -103,20 +116,20 @@ export function UserProvider({ children }: { children: ReactNode }) {
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const newUser: User = await response.json();
       
-      setUsers((prev) => {
-        if (prev.some(existingUser => existingUser.id === newUser.id)) {
-          return prev;
-        }
-        return [...prev, newUser].sort((a, b) => a.id - b.id);
-      });
-      setTotalUsers(prev => prev + 1);
+      addUser(newUser);
     } catch (error) {
       console.error("Error adding user:", error);
       setError("Failed to add user");
     }
   };
-
-  const updateUser = async (id: number, updatedUser: Omit<User, 'id'>) => {
+  const updateUser = (id: number, updatedUser: Omit<User, 'id'>) => {
+    setUsers((prev) => 
+      prev.map((user) => 
+        user.id === id ? { ...updatedUser, id } : user
+      )
+    );
+  };
+  const updateUserAPI = async (id: number, updatedUser: Omit<User, 'id'>) => {
     try {
       const response = await fetch(`/api/proxy/users/${id}`, {
         method: 'PUT',
@@ -127,20 +140,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const updated: User = await response.json();
       
-      setUsers((prev) => 
-        prev.map((user) => 
-          user.id === id ? updated : user
-        )
-      );
+      updateUser(id, updatedUser);
     } catch (error) {
       console.error("Error updating user:", error);
       setError("Failed to update user");
     }
   };
+  const removeUser = (id: number) => {
+    setUsers((prev) => prev.filter((user) => user.id !== id));
+    setTotalUsers(prev => Math.max(0, prev - 1));
+  };
 
-  const removeUser = async (id: number) => {
+  const removeUserAPI = async (id: number) => {
     try {
       const response = await fetch(`/api/proxy/users/${id}`, {
         method: 'DELETE',
@@ -148,20 +160,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       
-      setUsers((prev) => prev.filter((user) => user.id !== id));
-      setTotalUsers(prev => Math.max(0, prev - 1));
+      removeUser(id);
     } catch (error) {
       console.error("Error removing user:", error);
       setError("Failed to remove user");
     }
   };
-
   return (
     <UserContext.Provider value={{ 
       users, 
       addUser, 
       updateUser, 
-      removeUser, 
+      removeUser,
+      addUserAPI,
+      updateUserAPI,
+      removeUserAPI,
       loading, 
       loadingMore,
       error,
