@@ -1,7 +1,5 @@
 "use client";
-
 import SearchBar from "../components/searchbar";
-import UserRow from "../components/usercard";
 import { useUserContext } from "../context/userContext";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { useSearch } from "../hooks/useSearch";
