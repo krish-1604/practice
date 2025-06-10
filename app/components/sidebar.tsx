@@ -11,7 +11,7 @@ export default function Sidebar() {
           <Link href="/dashboard" className="hover:text-white">Home</Link>
         </li>
         <li>
-          <Link href="/search" className="hover:text-white">Search</Link>
+          <Link href="/insta" className="hover:text-white">Instagram</Link>
         </li>
       </ul>
     </div>

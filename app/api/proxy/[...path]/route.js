@@ -26,6 +26,8 @@ async function proxy(request, routeParams = {}) {
   try {
     const url = new URL(request.url);
     const pathArray = Array.isArray(routeParams.path) ? routeParams.path : [];
+    
+    // Handle Users Search (existing functionality)
     if (pathArray.length >= 2 && pathArray[0] === 'users' && pathArray[1] === 'search') {
       const searchQuery = url.searchParams.get('q');
       if (!searchQuery) {
@@ -97,11 +99,89 @@ async function proxy(request, routeParams = {}) {
       }, { status: 200 });
     }
     
+    // Handle IG (Instagram) routes
+    if (pathArray.length >= 1 && pathArray[0] === 'ig') {
+      console.log('Processing IG route:', pathArray);
+      
+      // Handle different IG operations
+      if (pathArray.length === 1) {
+        // /api/proxy/ig - GET all users or POST new user
+        const backendPath = '/ig';
+        const query = url.search;
+        
+        console.log(`IG: Proxying ${request.method} request to: ${BACKEND_URL}${backendPath}${query}`);
+        
+        const body = ['GET', 'HEAD'].includes(request.method)
+          ? undefined
+          : await request.json().catch(() => undefined);
+
+        console.log('IG Request body:', body);
+
+        const res = await fetch(`${BACKEND_URL}${backendPath}${query}`, {
+          method: request.method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: body ? JSON.stringify(body) : undefined,
+        });
+
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            console.log('IG Backend returned error:', res.status, data);
+          }
+          return NextResponse.json(data, { status: res.status });
+        } else {
+          const text = await res.text();
+          console.log('IG Non-JSON response:', text);
+          return NextResponse.json({ error: 'Unexpected response from IG backend' }, { status: res.status });
+        }
+      } 
+      else if (pathArray.length === 2) {
+        // /api/proxy/ig/[id] - PUT (update) or DELETE specific user
+        const userId = pathArray[1];
+        const backendPath = `/ig/${userId}`;
+        
+        console.log(`IG: Proxying ${request.method} request to: ${BACKEND_URL}${backendPath}`);
+        
+        const body = ['GET', 'HEAD'].includes(request.method)
+          ? undefined
+          : await request.json().catch(() => undefined);
+
+        console.log('IG Request body for user:', userId, body);
+
+        const res = await fetch(`${BACKEND_URL}${backendPath}`, {
+          method: request.method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: body ? JSON.stringify(body) : undefined,
+        });
+
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            console.log('IG Backend returned error for user:', userId, res.status, data);
+          }
+          return NextResponse.json(data, { status: res.status });
+        } else {
+          const text = await res.text();
+          console.log('IG Non-JSON response for user:', userId, text);
+          return NextResponse.json({ error: 'Unexpected response from IG backend' }, { status: res.status });
+        }
+      }
+    }
+    
+    // Default handling for other routes (existing functionality)
     const backendPath = '/' + pathArray.join('/');
     const query = url.search;
 
     console.log('Captured path segments:', pathArray);
-    console.log(`Proxying ${request.method} request to: ${BACKEND_URL}${backendPath}${query}`);    const body = ['GET', 'HEAD'].includes(request.method)
+    console.log(`Proxying ${request.method} request to: ${BACKEND_URL}${backendPath}${query}`);
+    
+    const body = ['GET', 'HEAD'].includes(request.method)
       ? undefined
       : await request.json().catch(() => undefined);
 
@@ -115,7 +195,9 @@ async function proxy(request, routeParams = {}) {
         'Content-Type': 'application/json',
       },
       body: body ? JSON.stringify(body) : undefined,
-    });    const contentType = res.headers.get('content-type') || '';
+    });
+
+    const contentType = res.headers.get('content-type') || '';
     if (contentType.includes('application/json')) {
       const data = await res.json();
       if (!res.ok) {
