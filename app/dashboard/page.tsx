@@ -74,91 +74,114 @@ export default function Dashboard() {
 
   return (
     <div className="bg-black text-[#39ff14] min-h-screen">
-      <div className="flex-1 p-6">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">Dashboard</h1>
-          <div className="text-[#9D9D9D]">
-            {isInSearchMode ? (
-              <>
-                Found {displayUsers.length} user{displayUsers.length !== 1 ? 's' : ''}
-                {isSearching && (
-                  <span className="ml-2">
-                    <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-[#39ff14]"></div>
-                  </span>
-                )}
-              </>
-            ) : (
-              `Showing ${users.length} of ${totalUsers} users`
-            )}
+      {/* Fixed Header Section */}
+      <div className="sticky top-0 z-10 bg-black border-b border-[#3A3A3A]">
+        {/* Title and Stats Row */}
+        <div className="px-6 pt-6">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-4xl font-bold">Dashboard</h1>
+            <div className="text-[#9D9D9D]">
+              {isInSearchMode ? (
+                <>
+                  Found {displayUsers.length} user{displayUsers.length !== 1 ? 's' : ''}
+                  {isSearching && (
+                    <span className="ml-2">
+                      <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-[#39ff14]"></div>
+                    </span>
+                  )}
+                </>
+              ) : (
+                `Showing ${users.length} of ${totalUsers} users`
+              )}
+            </div>
           </div>
         </div>
         
-        <div className="py-10 px-20">
-          <SearchBar onSearch={handleSearch} />     
+        {/* Search Bar */}
+        <div className="px-6 py-10">
+          <div className="px-20">
+            <SearchBar onSearch={handleSearch} />     
+          </div>
         </div>
 
-        {/* Search status indicator */}
-        {isInSearchMode && (
-          <div className="mb-4 px-4">
-            <p className="text-[#9D9D9D] text-sm">
-              {isSearching ? (
-                <>
-                  <span className="inline-block animate-spin rounded-full h-3 w-3 border-b border-[#39ff14] mr-2"></span>
-                  Searching for: &quot;<span className="text-[#39ff14]">{searchQuery}</span>&quot;
-                </>
-              ) : (
-                <>
-                  Search results for: &quot;<span className="text-[#39ff14]">{searchQuery}</span>&quot;
-                  {displayUsers.length === 0 && " - No matches found"}
-                </>
-              )}
-            </p>
+        {/* Search Status and Error Messages */}
+        <div className="px-6">
+          {/* Search status indicator */}
+          {isInSearchMode && (
+            <div className="mb-4">
+              <p className="text-[#9D9D9D] text-sm">
+                {isSearching ? (
+                  <>
+                    <span className="inline-block animate-spin rounded-full h-3 w-3 border-b border-[#39ff14] mr-2"></span>
+                    Searching for: &quot;<span className="text-[#39ff14]">{searchQuery}</span>&quot;
+                  </>
+                ) : (
+                  <>
+                    Search results for: &quot;<span className="text-[#39ff14]">{searchQuery}</span>&quot;
+                    {displayUsers.length === 0 && " - No matches found"}
+                  </>
+                )}
+              </p>
+            </div>
+          )}
+
+          {/* Search error */}
+          {searchError && (
+            <div className="mb-4 py-3 px-4 bg-red-900/20 border border-red-500 rounded-lg">
+              <p className="text-red-400 text-center">{searchError}</p>
+              <button 
+                onClick={() => handleSearch(searchQuery)}
+                className="mt-2 mx-auto block px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Fixed Table Header - only show when there are users */}
+        {displayUsers.length > 0 && (
+          <div className="px-6">
+            <div className="bg-[#2A2A2A] rounded-t-lg sticky top-[200px] z-10">
+              <div className="grid grid-cols-12 gap-4 py-4 px-6">
+                <div className="col-span-1 text-left text-[#39ff14] font-semibold">ID</div>
+                <div className="col-span-3 text-left text-[#39ff14] font-semibold">Name</div>
+                <div className="col-span-5 text-left text-[#39ff14] font-semibold">Email</div>
+                <div className="col-span-3 text-left text-[#39ff14] font-semibold">Actions</div>
+              </div>
+            </div>
           </div>
         )}
+      </div>
 
-        {/* Search error */}
-        {searchError && (
-          <div className="mb-4 py-3 px-4 bg-red-900/20 border border-red-500 rounded-lg">
-            <p className="text-red-400 text-center">{searchError}</p>
-            <button 
-              onClick={() => handleSearch(searchQuery)}
-              className="mt-2 mx-auto block px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        )}
-
+      {/* Content Section */}
+      <div className="px-6">
         {displayUsers.length > 0 ? (
-          <div className="bg-[#1B1B1B] rounded-lg overflow-hidden shadow-lg">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-[#2A2A2A] border-b border-[#3A3A3A]">
-                    <th className="text-left py-4 px-6 text-[#39ff14] font-semibold">ID</th>
-                    <th className="text-left py-4 px-6 text-[#39ff14] font-semibold">Name</th>
-                    <th className="text-left py-4 px-6 text-[#39ff14] font-semibold">Email</th>
-                    <th className="text-left py-4 px-6 text-[#39ff14] font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {displayUsers.map((user, index) => {
-                    const isLast = index === displayUsers.length - 1;
-                    const displayNumber = index + 1;
-                    return (
-                      <UserRow 
-                        key={`user-${user.id}-${index}-${isInSearchMode ? 'search' : 'normal'}`}
-                        id={user.id}
-                        displayNumber={displayNumber}
-                        name={user.name} 
-                        email={user.email}
-                        isLast={isLast}
-                        ref={isLast && !isInSearchMode ? lastUserElementRef : null}
-                      />
-                    );
-                  })}
-                </tbody>
-              </table>
+          <div className={`bg-[#1B1B1B] shadow-lg ${displayUsers.length > 0 ? 'rounded-b-lg' : 'rounded-lg'}`}>
+            <div className="space-y-0">
+              {displayUsers.map((user, index) => {
+                const isLast = index === displayUsers.length - 1;
+                const displayNumber = index + 1;
+                return (
+                  <div 
+                    key={`user-${user.id}-${index}-${isInSearchMode ? 'search' : 'normal'}`}
+                    ref={isLast && !isInSearchMode ? lastUserElementRef : null}
+                    className={`grid grid-cols-12 gap-4 py-4 px-6 border-b border-[#3A3A3A] hover:bg-[#2A2A2A] transition-colors ${isLast ? 'border-b-0' : ''}`}
+                  >
+                    <div className="col-span-1 text-[#39ff14] font-medium">{displayNumber}</div>
+                    <div className="col-span-3 text-[#39ff14] font-medium truncate">{user.name}</div>
+                    <div className="col-span-5 text-[#9D9D9D] truncate">{user.email}</div>
+                    <div className="col-span-3 flex gap-2">
+                      <button className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors">
+                        Edit
+                      </button>
+                      <button className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors">
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             
             {loadingMore && !isInSearchMode && (
