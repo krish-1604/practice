@@ -39,7 +39,7 @@ export function useUserOperations() {
         throw new Error(errorMessage);
       }      const newUser = await response.json();
       console.log('Successfully created user:', newUser);
-      addUser(newUser); // This now only updates state, doesn't make API call
+      addUser(newUser);
       return newUser;
     } catch (error) {
       console.error('Error adding user:', error);
