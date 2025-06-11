@@ -41,8 +41,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
-  const [nextStart, setNextStart] = useState(0);
-  const [totalUsers, setTotalUsers] = useState(0);
+  const [nextStart, setNextStart] = useState(0);  const [totalUsers, setTotalUsers] = useState(0);
+  const baseurl = process.env.NEXT_PUBLIC_BACKEND_URL;
   
   const mergeUsers = (existingUsers: User[], newUsers: User[]): User[] => {
     return [...existingUsers, ...newUsers];
@@ -50,10 +50,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function fetchInitialUsers() {
-      try {
-        setLoading(true);
+      try {        setLoading(true);
         setError(null);
-        const response = await fetch(`/api/proxy/users?start=0&limit=10`);
+        const response = await fetch(`${baseurl}/users?start=0&limit=10`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data: ApiResponse = await response.json();
         
@@ -74,10 +73,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const loadMoreUsers = useCallback(async () => {
     if (!hasMore || loadingMore) return;
 
-    try {
-      setLoadingMore(true);
+    try {      setLoadingMore(true);
       setError(null);
-      const response = await fetch(`/api/proxy/users?start=${nextStart}&limit=10`);
+      const response = await fetch(`${baseurl}/users?start=${nextStart}&limit=10`);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data: ApiResponse = await response.json();
       
@@ -101,10 +99,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
     setTotalUsers(prev => prev + 1);
   };
-
   const addUserAPI = async (user: Omit<User, 'id'>) => {
     try {
-      const response = await fetch('/api/proxy/users', {
+      const response = await fetch(`${baseurl}/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,10 +124,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
         user.id === id ? { ...updatedUser, id } : user
       )
     );
-  };
-  const updateUserAPI = async (id: number, updatedUser: Omit<User, 'id'>) => {
+  };  const updateUserAPI = async (id: number, updatedUser: Omit<User, 'id'>) => {
     try {
-      const response = await fetch(`/api/proxy/users/${id}`, {
+      const response = await fetch(`${baseurl}/users/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -150,10 +146,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUsers((prev) => prev.filter((user) => user.id !== id));
     setTotalUsers(prev => Math.max(0, prev - 1));
   };
-
   const removeUserAPI = async (id: number) => {
     try {
-      const response = await fetch(`/api/proxy/users/${id}`, {
+      const response = await fetch(`${baseurl}/users/${id}`, {
         method: 'DELETE',
       });
 

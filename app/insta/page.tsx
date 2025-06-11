@@ -8,21 +8,19 @@ interface IGUser {
   age: number;
 }
 
-export default function InstagramPage() {
-  const [igData, setIgData] = useState<IGUser[]>([]);
+export default function InstagramPage() {  const [igData, setIgData] = useState<IGUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const baseurl = process.env.NEXT_PUBLIC_BACKEND_URL;
   useEffect(() => {
     fetchIgData();
   }, []);
 
-  const fetchIgData = async () => {
-    try {
+  const fetchIgData = async () => {    try {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/proxy/ig');
+      const response = await fetch(`${baseurl}/ig`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

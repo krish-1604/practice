@@ -9,12 +9,12 @@ interface User {
 
 export function useUserOperations() {
   const { addUser, updateUser, removeUser } = useUserContext();
+  const baseurl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const [isDeleting, setIsDeleting] = useState<Record<number, boolean>>({});
   const handleAddUser = async (userData: Omit<User, 'id'>) => {
     try {
       console.log('Sending user data:', userData);
-      
-      const response = await fetch('/api/proxy/users', {
+        const response = await fetch(`${baseurl}/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,8 +48,7 @@ export function useUserOperations() {
   };
 
   const handleUpdateUser = async (id: number, userData: Omit<User, 'id'>) => {
-    try {
-      const response = await fetch(`/api/proxy/users/${id}`, {
+    try {      const response = await fetch(`${baseurl}/users/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -77,8 +76,7 @@ export function useUserOperations() {
     }
 
     setIsDeleting(prev => ({ ...prev, [id]: true }));
-    try {
-      const response = await fetch(`/api/proxy/users/${id}`, {
+    try {      const response = await fetch(`${baseurl}/users/${id}`, {
         method: 'DELETE',
       });
 

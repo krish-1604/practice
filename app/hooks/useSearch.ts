@@ -8,6 +8,7 @@ interface User {
 
 export function useSearch() {
   const [searchQuery, setSearchQuery] = useState('');
+  const baseurl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -20,15 +21,18 @@ export function useSearch() {
       setIsSearching(false);
       setSearchError(null);
       return;
-    }
-
-    try {
+    }    try {
       setIsSearching(true);
       setSearchError(null);
       
-      const response = await fetch(`/api/proxy/users/search?q=${encodeURIComponent(query)}`);
+      const url = `${baseurl}/users/search?query=${encodeURIComponent(query)}`;
+      console.log('Search URL:', url);
+      
+      const response = await fetch(url);
       
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Search failed:', response.status, errorText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
