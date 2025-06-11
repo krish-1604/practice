@@ -73,7 +73,7 @@ export default function Dashboard() {
   return (
     <div className="bg-black text-[#39ff14] min-h-screen">
       {/* Fixed Header Section */}
-      <div className="sticky top-0 z-10 bg-black border-b border-[#3A3A3A]">
+      <div className="sticky top-0 z-10 bg-black">
         {/* Title and Stats Row */}
         <div className="px-6 pt-6">
           <div className="flex justify-between items-center mb-8">
