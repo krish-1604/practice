@@ -13,6 +13,9 @@ export default function Sidebar() {
         <li>
           <Link href="/insta" className="hover:text-white">Instagram</Link>
         </li>
+        <li>
+          <Link href="/names" className="hover:text-white">Names</Link>
+        </li>
       </ul>
     </div>
   );
